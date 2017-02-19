@@ -21,7 +21,9 @@ module OTPM
                     end
       end
 
-      def add_account!(user, secret, issuer: '', type: :totp, digits: 6, digest: 'sha1', interval: 30)
+      def add_account!(user, secret, issuer: '',
+                       type: :totp, digits: 6,
+                       digest: 'sha1', interval: 30, counter: 0)
         accessor = account_key(user, issuer)
         unless @database.has_key?(accessor)
           @database[accessor] = {'user'     => user,
@@ -30,7 +32,8 @@ module OTPM
                                  'type'     => type,
                                  'digits'   => digits,
                                  'digest'   => digest,
-                                 'interval' => interval}
+                                 'interval' => interval,
+                                 'counter'  => counter}
         end
       end
 

@@ -18,10 +18,10 @@ module OTPM
       account = @db.get_account(user, issuer: issuer)
       case account['type']
       when :totp
-        totp = ROTP::TOTP.new(account['secret'], {digits: account['digits'],
-                                                  digest: account['algorithm'],
+        totp = ROTP::TOTP.new(account['secret'], {digits:   account['digits'],
+                                                  digest:   account['algorithm'],
                                                   interval: account['interval'],
-                                                  issuer: account['issuer']})
+                                                  issuer:   account['issuer']})
         totp.now
       when :hotp
         raise('Not implemented yet') # TODO
@@ -35,13 +35,16 @@ module OTPM
     end
 
 
-    def store_account(user, secret, issuer: '', type: :totp, digits: 6, digest: 'sha1', interval: 30)
+    def store_account(user, secret, issuer: '',
+                      type: :totp, digits: 6, digest: 'sha1',
+                      interval: 30, counter: 0)
       @db.add_account!(user, secret,
                        issuer:   issuer,
                        type:     type,
                        digits:   digits,
                        digest:   digest,
-                       interval: interval)
+                       interval: interval,
+                       counter:  counter)
       @db.write!
     end
 
