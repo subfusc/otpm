@@ -20,13 +20,13 @@ module OTPM
     def generate_code(user, issuer: '')
       account = @db.get_account(user, issuer: issuer)
       case account['type']
-      when :totp
+      when 'totp'
         totp = ROTP::TOTP.new(account['secret'], {digits:   account['digits'],
                                                   digest:   account['algorithm'],
                                                   interval: account['interval'],
                                                   issuer:   account['issuer']})
         totp.now
-      when :hotp
+      when 'hotp'
         raise('Not implemented yet') # TODO
       else raise('Unsupported type')
       end
@@ -65,14 +65,14 @@ module OTPM
         raise('Issuer parameter and prefix does not match')
       end
 
-      params = {digits: params['digits'],
-                digest: params['algorithm'],
-                interval: params['period'],
-                type: uri.host,
-                issuer: issuer,
-                counter: params['counter']}.compact!
+      params_translated = {digits: params['digits']&.to_i,
+                           digest: params['algorithm'],
+                           interval: params['period']&.to_i,
+                           type: uri.host,
+                           issuer: issuer,
+                           counter: params['counter']&.to_i}.compact!
 
-      store_account(user, params['secret'], **params)
+      store_account(user, params['secret'], **params_translated)
     end
 
   end

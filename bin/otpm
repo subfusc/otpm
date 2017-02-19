@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
-
 require 'otpm'
+require 'io/console'
 
 def help
   puts(<<~EOS)
@@ -13,7 +13,7 @@ def help
 end
 
 def list_accounts(database)
-  print(database.list_accounts)
+  puts(database.list_accounts.map{|user,account| format("%s:%s", user, account)})
 end
 
 def add_account(database)
@@ -24,22 +24,33 @@ end
 
 def generate_code(database)
   print("account: ")
-  user, issuer = gets.split(':')
-  database.generate_code(user, issuer: issuer)
+  user, issuer = gets.chomp.split(':')
+  puts(format("code: %s", database.generate_code(user, issuer: issuer)))
 end
 
+def open_database
+  print("password: ")
+  password = STDIN.noecho(&:gets)
+  puts('')
+  OTPM::Manager.new(password)
+end
 
 def main
-  print("password: ")
-  password = gets
-  database = OTPM::Manager.new(password)
+  database = open_database
   help
   loop do
     print("otpm> ")
-    case gets
-    when 'q' then exit
+    case gets.strip
+    when 'a' then add_account(database)
+    when 'l' then list_accounts(database)
+    when 'g' then generate_code(database)
+    when 'q' then exit(0)
     end
   end
 end
 
-main
+begin
+  main
+rescue SystemExit, Interrupt
+  exit(0)
+end
