@@ -11,3 +11,6 @@ OTP secrets. For version 1.0 atleas the following criteria should apply:
 
 Requirements:
  - Ruby >= 2.3
+ - ROTP
+ - OpenSSL
+ - YAML
