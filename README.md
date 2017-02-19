@@ -8,3 +8,6 @@ OTP secrets. For version 1.0 atleas the following criteria should apply:
 - Ensure that corruption of the main file is not critical
 - Generate tokes for use
 - Give time for expiery of TOTP codes
+
+Requirements:
+ - Ruby >= 2.3
