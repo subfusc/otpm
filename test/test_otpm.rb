@@ -43,4 +43,10 @@ class OTPMTest < Minitest::Test
     assert_nil(bin_database.index('XDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ'))
     assert_nil(bin_database.index('john.doe@email.com'))
   end
+
+  def test_unlocking_fails_with_wrong_password
+    assert_raises OpenSSL::Cipher::CipherError do
+      OTPM::Manager.new('wrong-pass', storage_directory: '/tmp')
+    end
+  end
 end
