@@ -21,11 +21,30 @@ module OTPM
                     end
       end
 
-      def add_account!(provider, secret, account: nil)
-        unless @database.has_key?(provider)
-          @database[provider] = {'secret' => secret}
-          @database[provider]['account'] = account if account
+      def add_account!(user, secret, issuer: '', type: :totp, digits: 6, algorithm: :sha1, interval: 30)
+        accessor = account_key(user, issuer)
+        unless @database.has_key?(accessor)
+          @database[accessor] = {'user'      => user,
+                                 'secret'    => secret,
+                                 'issuer'    => issuer,
+                                 'type'      => type,
+                                 'digits'    => digits,
+                                 'algorithm' => algorithm,
+                                 'interval'  => interval}
         end
+      end
+
+      def get_account(user, issuer: '')
+        accessor = account_key(user, issuer)
+        @database[accessor]
+      end
+
+      def del_account!(user, issuer: '')
+        @database.delete(account_key(user, issuer))
+      end
+
+      def list_accounts
+        @database.map{|_,v| [v['user'], v['issuer']]}
       end
 
       def write!
@@ -40,11 +59,19 @@ module OTPM
 
       private
 
-      def read_config
-        if File.exists?(@config_file)
-          config = File.open(@config_file, 'r').read
-          YAML.load(config)
-        end
+      def account_key(user, issuer)
+        format('%s:%s', user, issuer)
+      end
+
+      def decrypt_database
+        read_blob
+      end
+
+      def encrypt_database
+        @database.to_yaml
+      end
+
+      def gen_key(password)
       end
 
       def new_config
@@ -55,15 +82,11 @@ module OTPM
         File.open(@storage_file, 'r').read if File.exists?(@storage_file)
       end
 
-      def gen_key(password)
-      end
-
-      def encrypt_database
-        @database.to_yaml
-      end
-
-      def decrypt_database
-        read_blob
+      def read_config
+        if File.exists?(@config_file)
+          config = File.open(@config_file, 'r').read
+          YAML.load(config)
+        end
       end
     end
   end
