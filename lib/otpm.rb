@@ -35,13 +35,13 @@ module OTPM
     end
 
 
-    def store_account(user, secret, issuer: '', type: :totp, digits: 6, algorithm: :sha1, interval: 30)
+    def store_account(user, secret, issuer: '', type: :totp, digits: 6, digest: 'sha1', interval: 30)
       @db.add_account!(user, secret,
-                       issuer:    issuer,
-                       type:      type,
-                       digits:    digits,
-                       algorithm: algorithm,
-                       interval:  interval)
+                       issuer:   issuer,
+                       type:     type,
+                       digits:   digits,
+                       digest:   digest,
+                       interval: interval)
       @db.write!
     end
 
