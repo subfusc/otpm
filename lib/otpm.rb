@@ -18,7 +18,11 @@ module OTPM
       account = @db.get_account(user, issuer: issuer)
       case account['type']
       when :totp
-        ROTP::TOTP.new(account['secret']).now
+        totp = ROTP::TOTP.new(account['secret'], {digits: account['digits'],
+                                                  digest: account['algorithm'],
+                                                  interval: account['interval'],
+                                                  issuer: account['issuer']})
+        totp.now
       when :hotp
         raise('Not implemented yet') # TODO
       else raise('Unsupported type')
