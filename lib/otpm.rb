@@ -56,10 +56,10 @@ module OTPM
       uri = URI.parse(google_style_uri)
       raise('Not a otpauth url') unless uri.scheme == 'otpauth'
       issuer, user = uri.path.split(':')
-      issuer = URI.unescape(issuer[1..-1]) if issuer
+      issuer = CGI::unescape(issuer[1..-1]) if issuer
       params = Hash[uri.query.split('&').
                      map{|s| s.split('=')}.
-                     map{|pair| pair.map{|s| URI.unescape(s)}}]
+                     map{|pair| pair.map{|s| CGI::unescape(s)}}]
 
       if issuer && params['issuer'] && issuer != params['issuer']
         raise('Issuer parameter and prefix does not match')
