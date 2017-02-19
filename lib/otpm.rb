@@ -51,11 +51,28 @@ module OTPM
       @db.write!
     end
 
-
+    # see https://github.com/google/google-authenticator/wiki/Key-Uri-Format
     def store_account_from_google_uri(google_style_uri)
-      # see https://github.com/google/google-authenticator/wiki/Key-Uri-Format
-      # TODO
-      raise('Not implemented yet.')
+      uri = URI.parse(google_style_uri)
+      raise('Not a otpauth url') unless uri.scheme == 'otpauth'
+      issuer, user = uri.path.split(':')
+      issuer = URI.unescape(issuer[1..-1]) if issuer
+      params = Hash[uri.query.split('&').
+                     map{|s| s.split('=')}.
+                     map{|pair| pair.map{|s| URI.unescape(s)}}]
+
+      if issuer && params['issuer'] && issuer != params['issuer']
+        raise('Issuer parameter and prefix does not match')
+      end
+
+      params = {digits: params['digits'],
+                digest: params['algorithm'],
+                interval: params['period'],
+                type: uri.host,
+                issuer: issuer,
+                counter: params['counter']}.compact!
+
+      store_account(user, params['secret'], **params)
     end
 
   end
