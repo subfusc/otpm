@@ -6,10 +6,10 @@ module OTPM
 
       def initialize(password, storage_directory: nil, storage_file: nil, config_file: nil)
         @storage_directory = storage_directory || File.join(Dir.home, ".cache", "otpm")
-        @storage_file      = storage_file      || File.join(@storage_directory, "storage.bf")
+        @storage_file      = storage_file      || File.join(@storage_directory, "storage.bin")
         @config_file       = config_file       || File.join(@storage_directory, "storage.yml")
 
-        Dir.mkdir(@storage_directory) unless Dir.exists?(@storage_directory)
+        FileUtils.mkdir_p(@storage_directory) unless Dir.exist?(@storage_directory)
         @config = read_config || new_config
         @key = gen_key(password)
 
@@ -51,8 +51,8 @@ module OTPM
       end
 
       def write!
-        File.delete(@config_file)  if File.exists?(@config_file)
-        File.delete(@storage_file) if File.exists?(@storage_file)
+        File.delete(@config_file)  if File.exist?(@config_file)
+        File.delete(@storage_file) if File.exist?(@storage_file)
 
         blob = encrypt_database
 
@@ -82,11 +82,11 @@ module OTPM
       end
 
       def read_blob
-        File.open(@storage_file, 'r').read if File.exists?(@storage_file)
+        File.open(@storage_file, 'r').read if File.exist?(@storage_file)
       end
 
       def read_config
-        if File.exists?(@config_file)
+        if File.exist?(@config_file)
           config = File.open(@config_file, 'r').read
           YAML.load(config)
         end
