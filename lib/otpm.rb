@@ -1,14 +1,17 @@
-require 'otpm/storage/database'
-require 'otpm/storage/bf_database'
+require 'storage/database'
+require 'storage/bf_database'
 require 'rotp'
+require 'uri'
 
 module OTPM
   class Manager
 
-    def initialize(password, database_type: :blowfish)
+    def initialize(password, database_type: :blowfish, storage_directory: nil)
       @db = case database_type
-            when :blowfish then Storage::BfDatabase.new(password)
-            when :plaintext then Storage::Database.new(password)
+            when :blowfish
+              Storage::BfDatabase.new(password, storage_directory: storage_directory)
+            when :plaintext
+              Storage::Database.new(password, storage_directory: storage_directory)
             else raise(format("%s is not a supported database type ATM.", database_type))
             end
     end

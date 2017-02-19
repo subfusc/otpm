@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+require 'otpm'
+
+def help
+  puts(<<~EOS)
+  l: List accounts
+  a: Add Accunt
+  g: Generate Code
+  q: Quit
+  EOS
+end
+
+def list_accounts(database)
+  print(database.list_accounts)
+end
+
+def add_account(database)
+  print("otpauth uri: ")
+  uri = gets
+  database.store_account_from_google_uri(uri.chomp)
+end
+
+def generate_code(database)
+  print("account: ")
+  user, issuer = gets.split(':')
+  database.generate_code(user, issuer: issuer)
+end
+
+
+def main
+  print("password: ")
+  password = gets
+  database = OTPM::Manager.new(password)
+  help
+  loop do
+    print("otpm> ")
+    case gets
+    when 'q' then exit
+    end
+  end
+end
+
+main
