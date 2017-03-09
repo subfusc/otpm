@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'otpm'
-  s.version     = '0.0.1'
+  s.version     = '0.0.2'
   s.licenses    = ['GPL-3.0']
   s.summary     = "OTP management library"
   s.description = "A library that stores OTP secrets sensibly safe and generates codes for you."
