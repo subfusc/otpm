@@ -1,9 +1,11 @@
 require 'storage/database'
 require 'storage/bf_database'
+require 'ruby_compat'
 require 'rotp'
 require 'uri'
 
 module OTPM
+
   class Manager
 
     def initialize(password, database_type: :blowfish, storage_directory: nil)
