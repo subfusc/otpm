@@ -9,6 +9,4 @@
    * OpenSSL
    * ROTP
    * YAML
- - Add google uri parsing
- - Add tests
  - Look into making a gem or just submodule into cli and gui projects.

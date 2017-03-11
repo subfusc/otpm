@@ -1,6 +1,8 @@
 # otpm
 A ruby library for storing OTP secrets
 
+[![Build Status](https://travis-ci.org/subfuscous/otpm.svg?branch=master)](https://travis-ci.org/subfuscous/otpm)
+
 The goal of the project is be a high level library for managing and generating
 OTP secrets. For version 1.0 atleas the following criteria should apply:
 
