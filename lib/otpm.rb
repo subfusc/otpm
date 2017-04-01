@@ -1,5 +1,6 @@
 require 'storage/database'
 require 'storage/bf_database'
+require 'storage/aes_database'
 require 'ruby_compat'
 require 'rotp'
 require 'uri'
@@ -8,12 +9,14 @@ module OTPM
 
   class Manager
 
-    def initialize(password, database_type: :blowfish, storage_directory: nil)
+    def initialize(password, database_type: :aes, storage_directory: nil)
       @db = case database_type
+            when :aes
+              Storage::AESDatabase.new(password, storage_directory: storage_directory)
             when :blowfish
-              Storage::BfDatabase.new(password, storage_directory: storage_directory)
+              Storage::BfDatabase.new(password,  storage_directory: storage_directory)
             when :plaintext
-              Storage::Database.new(password, storage_directory: storage_directory)
+              Storage::Database.new(password,    storage_directory: storage_directory)
             else raise(format("%s is not a supported database type ATM.", database_type))
             end
     end
