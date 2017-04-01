@@ -3,6 +3,7 @@ require 'storage/bf_database'
 require 'storage/aes_database'
 require 'ruby_compat'
 require 'rotp'
+require 'version'
 require 'uri'
 
 module OTPM
@@ -21,6 +22,10 @@ module OTPM
             end
     end
 
+
+    def self.database_exist?(storage_directory = nil)
+      File.exist?(storage_directory || Storage::DEFAULT_DATABASE_LOCATION)
+    end
 
     def generate_code(user, issuer: '')
       account = @db.get_account(user, issuer: issuer)

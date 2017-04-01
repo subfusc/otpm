@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 require 'otpm'
 require 'io/console'
+require 'optparse'
+require 'pp'
 
 def help
   puts(<<~EOS)
@@ -28,29 +30,76 @@ def generate_code(database)
   puts(format("code: %s", database.generate_code(user, issuer: issuer)))
 end
 
-def open_database
-  print("password: ")
-  password = STDIN.noecho(&:gets)
-  puts('')
-  OTPM::Manager.new(password)
+def new_database(directory = nil)
+  encryption_type = 'blowfish'
+  begin
+    print("Encryption [blowfish]/cleartext: ")
+    selection = gets.chomp
+    encryption_type = selection unless selection.empty?
+    encryption_type = encryption_type.to_sym
+  end while (!OTPM::Storage::SUPPORTED_ENCRYPTION_METHODS.include?(encryption_type))
+
+  password, second_password = 'tmp', 'second_tmp'
+  begin
+    print('password: ')
+    password = STDIN.noecho(&:gets).chomp
+    print('repeat password: ')
+    second_password = STDIN.noecho(&:gets).chomp
+    puts('Passwords did not match.') if password != second_password
+  end while (password != second_password)
+  OTPM::Manager.new(password, database_type: encryption_type, storage_directory: directory)
 end
 
-def main
-  database = open_database
-  help
-  loop do
-    print("otpm> ")
-    case gets.strip
-    when 'a' then add_account(database)
-    when 'l' then list_accounts(database)
-    when 'g' then generate_code(database)
-    when 'q' then exit(0)
+def open_database(directory = nil)
+  if OTPM::Manager.database_exist?(directory)
+    print("password: ")
+    password = STDIN.noecho(&:gets).chomp
+    puts('')
+    OTPM::Manager.new(password, storage_directory: directory)
+  else
+    new_database(directory)
+  end
+end
+
+def main(options)
+  database = open_database(options[:directory])
+  if database
+    help
+    loop do
+      print("otpm> ")
+      case gets.strip
+      when 'a' then add_account(database)
+      when 'l' then list_accounts(database)
+      when 'g' then generate_code(database)
+      when 'q' then exit(0)
+      end
     end
   end
 end
 
+
+options = {}
+parser = OptParse.new do |opts|
+  opts.banner = 'Usage: otpm [example]'
+
+  opts.on('-d', '--directory DIRECTORY', 'Where to store the database and related files') do |dir|
+    options[:directory] = dir
+  end
+
+  opts.on('-v', '--version', 'Show version') do
+    puts(OTPM::VERSION)
+    exit
+  end
+
+  opts.on('-h', '--help', 'Show this text') do
+    puts(opts)
+    exit
+  end
+end.parse!
+
+
 begin
-  main
+  main(options)
 rescue SystemExit, Interrupt
   exit(0)
 end

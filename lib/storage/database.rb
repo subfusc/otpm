@@ -2,10 +2,13 @@ require 'yaml'
 
 module OTPM
   module Storage
+    DEFAULT_DATABASE_LOCATION = File.join(Dir.home, ".cache", "otpm")
+    SUPPORTED_ENCRYPTION_METHODS = [:cleartext, :blowfish, :aes]
+
     class Database
 
       def initialize(password, storage_directory: nil, storage_file: nil, config_file: nil)
-        @storage_directory = storage_directory || File.join(Dir.home, ".cache", "otpm")
+        @storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
         @storage_file      = storage_file      || File.join(@storage_directory, "storage.bin")
         @config_file       = config_file       || File.join(@storage_directory, "storage.yml")
 
