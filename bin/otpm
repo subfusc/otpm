@@ -7,6 +7,7 @@ require 'pp'
 
 def help
   puts(<<~EOS)
+
   l: List accounts
   a: Add Accunt
   g: Generate Code
@@ -31,27 +32,28 @@ def generate_code(database)
 end
 
 def new_database(directory = nil)
-  encryption_type = 'blowfish'
+  encryption_type = 'aes'
   begin
-    print("Encryption [blowfish]/cleartext: ")
+    print("Encryption [aes]/blowfish/cleartext: ")
     selection = gets.chomp
     encryption_type = selection unless selection.empty?
-    encryption_type = encryption_type.to_sym
-  end while (!OTPM::Storage::SUPPORTED_ENCRYPTION_METHODS.include?(encryption_type))
+    encryption_type = encryption_type&.to_sym
+  end while (encryption_type &&
+             !OTPM::Storage::SUPPORTED_ENCRYPTION_METHODS.include?(encryption_type))
 
   password, second_password = 'tmp', 'second_tmp'
   begin
     print('password: ')
     password = STDIN.noecho(&:gets).chomp
-    print('repeat password: ')
+    print("\nrepeat password: ")
     second_password = STDIN.noecho(&:gets).chomp
-    puts('Passwords did not match.') if password != second_password
+    puts("\nPasswords did not match.") if password != second_password
   end while (password != second_password)
   OTPM::Manager.new(password, database_type: encryption_type, storage_directory: directory)
 end
 
 def open_database(directory = nil)
-  if OTPM::Manager.database_exist?(directory)
+  if OTPM::Manager.database_exist?(storage_directory: directory)
     print("password: ")
     password = STDIN.noecho(&:gets).chomp
     puts('')

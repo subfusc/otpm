@@ -14,10 +14,11 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'rotp', '~> 3'
   s.add_runtime_dependency 'openssl', '~> 2'
 
-  s.add_development_dependency 'rake', '~> 12'
-  s.add_development_dependency 'minitest', '~> 5'
-  s.add_development_dependency 'bundler', '~> 1'
-  s.add_development_dependency 'fakefs', '~> 0.10'
+  s.add_development_dependency 'rake'     , '~> 12'
+  s.add_development_dependency 'minitest' , '~> 5'
+  s.add_development_dependency 'bundler'  , '~> 1'
+  s.add_development_dependency 'fakefs'   , '~> 0.10'
+  s.add_development_dependency 'uuidtools'     , '~> 2.1'
 
   s.files       = %x{git ls-files}.split("\n")
   s.executables   = %x{git ls-files -- bin/*}.split("\n").map{ |f| File.basename(f) }

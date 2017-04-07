@@ -3,14 +3,17 @@ require 'yaml'
 module OTPM
   module Storage
     DEFAULT_DATABASE_LOCATION = File.join(Dir.home, ".cache", "otpm")
+    DEFAULT_DATABASE_STORAGE  = "storage.bin"
+    DEFAULT_DATABASE_CONFIG   = "storage.yml"
     SUPPORTED_ENCRYPTION_METHODS = [:cleartext, :blowfish, :aes]
 
     class Database
 
       def initialize(password, storage_directory: nil, storage_file: nil, config_file: nil)
         @storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
-        @storage_file      = storage_file      || File.join(@storage_directory, "storage.bin")
-        @config_file       = config_file       || File.join(@storage_directory, "storage.yml")
+        @storage_file, @config_file = Database.file_paths(storage_directory: storage_directory,
+                                                          storage_file: storage_file,
+                                                          config_file: config_file)
 
         FileUtils.mkdir_p(@storage_directory) unless Dir.exist?(@storage_directory)
         @config = read_config || new_config
@@ -22,6 +25,12 @@ module OTPM
                     else
                       {}
                     end
+      end
+
+      def Database.file_paths(storage_directory: nil, storage_file: nil, config_file: nil)
+        storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
+        [File.join(storage_directory, (storage_file || DEFAULT_DATABASE_STORAGE)),
+         File.join(storage_directory, (config_file  || DEFAULT_DATABASE_CONFIG))]
       end
 
       def add_account!(user, secret, issuer: '',
