@@ -22,6 +22,9 @@ module OTPM
             end
     end
 
+    def delete_account(user, issuer: '')
+      @db.del_account!(user, issuer: issuer)
+    end
 
     def self.database_exist?(storage_directory: nil, storage_file: nil, config_file: nil)
       storage, config = Storage::Database.file_paths(storage_directory: storage_directory,
