@@ -49,4 +49,20 @@ class OTPMTest < Minitest::Test
       OTPM::Manager.new('wrong-pass', storage_directory: '/tmp')
     end
   end
+
+  def test_show_account
+    assert_equal(@manager.show_account('john.doe@email.com', issuer: 'ACME Co'),
+                 {"user"     => "john.doe@email.com",
+                  "secret"   => "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ",
+                  "issuer"   => "ACME Co",
+                  "type"     => "totp",
+                  "digits"   => 6,
+                  "digest"   => "SHA1",
+                  "interval" => 30,
+                  "counter"  => 0})
+  end
+
+  def test_generate_code
+    assert(/\d{6}/, @manager.generate_code('john.doe@email.com', issuer: 'ACME Co'))
+  end
 end

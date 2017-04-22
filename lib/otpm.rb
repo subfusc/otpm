@@ -50,17 +50,20 @@ module OTPM
       @db.list_accounts
     end
 
+    def show_account(user, issuer: '')
+      @db.get_account(user, issuer: issuer)
+    end
 
     def store_account(user, secret, issuer: '',
                       type: :totp, digits: 6, digest: 'sha1',
                       interval: 30, counter: 0)
       @db.add_account!(user, secret,
                        issuer:   issuer,
-                       type:     type,
-                       digits:   digits,
-                       digest:   digest,
-                       interval: interval,
-                       counter:  counter)
+                       type:     type.to_s,
+                       digits:   digits.to_i,
+                       digest:   digest.to_s,
+                       interval: interval&.to_i,
+                       counter:  counter&.to_i)
       @db.write!
     end
 

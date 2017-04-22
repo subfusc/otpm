@@ -40,7 +40,7 @@ class OTPMBinTest < Minitest::Test
       output.readpartial(1024, buffer)
       output.readpartial(1024, buffer)
       assert(buffer =~ /^\s*otpm>\s+$/m)
-      input.puts("a\n")
+      input.puts("u\n")
       output.readpartial(1024, buffer)
       output.readpartial(1024, buffer)
       assert(buffer =~ /otpauth uri:/)
