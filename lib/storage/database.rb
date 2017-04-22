@@ -84,7 +84,7 @@ module OTPM
       private
 
       def account_key(user, issuer)
-        format('%s:%s', user, issuer)
+        !issuer.empty? ? format('%s:%s', user, issuer) : user
       end
 
       def decrypt_database
