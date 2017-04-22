@@ -40,7 +40,13 @@ module OTPM
                                                   issuer:   account['issuer']})
         totp.now
       when 'hotp'
-        raise('Not implemented yet') # TODO
+        hotp = ROTP::HOTP.new(account['secret'], {digits: account['digits'],
+                                                  digest: account['algorithm'],
+                                                  issuer: account['issuer']})
+        code = hotp.at(account['counter'])
+        @db.increment_counter(user, issuer: issuer)
+        @db.write!
+        code
       else raise('Unsupported type')
       end
     end

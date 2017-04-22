@@ -51,7 +51,16 @@ module OTPM
 
       def get_account(user, issuer: '')
         accessor = account_key(user, issuer)
-        @database[accessor]
+        index_of_entire_key = @database.keys.index{|key| key.start_with?(accessor)}
+        if index_of_entire_key
+          accessor = @database.keys[index_of_entire_key]
+          @database[accessor]
+        end
+      end
+
+      def increment_counter(user, issuer: '')
+        accessor = account_key(user, issuer)
+        @database[accessor]['counter'] += 1
       end
 
       def del_account!(user, issuer: '')
