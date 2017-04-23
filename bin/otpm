@@ -2,22 +2,23 @@
 # -*- coding: utf-8 -*-
 require 'otpm'
 require 'pp'
+require 'yaml'
 require 'io/console'
 require 'optparse'
-require 'pp'
 
 TOTP_REQUIRED = {issuer: '', digest: 'sha1', interval: 30}
 HOTP_REQUIRED = {issuer: '', digest: 'sha1', counter: 0}
 
 def help
   puts(<<~EOS)
-    (a)dd_account: Add account
-    (g)enerate:    Generate Code
-    (h)elp:        Show this
-    (l)ist:        List accounts
-    (q)uit:        Quit
-    (s)how:        Show account
-    add_(u)ri:     Add account by Google URI
+  (a)dd:         Add account
+  add (u)ri:     Add account by Google URI
+  (d)elete:      Delete Account
+  (g)enerate:    Generate Code
+  (h)elp:        Show this
+  (l)ist:        List accounts
+  (q)uit:        Quit
+  (s)how:        Show account
   EOS
 end
 
@@ -67,19 +68,22 @@ def new_database(directory = nil)
   end while (encryption_type &&
              !OTPM::Storage::SUPPORTED_ENCRYPTION_METHODS.include?(encryption_type))
 
-  password, second_password = 'tmp', 'second_tmp'
-  begin
-    print('password: ')
-    password = STDIN.noecho(&:gets).chomp
-    print("\nrepeat password: ")
-    second_password = STDIN.noecho(&:gets).chomp
-    puts("\nPasswords did not match.") if password != second_password
-  end while (password != second_password)
-  OTPM::Manager.new(password, database_type: encryption_type, storage_directory: directory)
+  unless encryption_type == :cleartext
+    password, second_password = 'tmp', 'second_tmp'
+    begin
+      print('password: ')
+      password = STDIN.noecho(&:gets).chomp
+      print("\nrepeat password: ")
+      second_password = STDIN.noecho(&:gets).chomp
+      puts("\nPasswords did not match.") if password != second_password
+    end while (password != second_password)
+    OTPM::Manager.new(password, database_type: encryption_type, storage_directory: directory)
+  end
 end
 
 def open_database(directory = nil)
   if OTPM::Manager.database_exist?(storage_directory: directory)
+
     print("password: ")
     password = STDIN.noecho(&:gets).chomp
     puts('')
@@ -95,6 +99,22 @@ def show_account(database)
   pp(database.show_account(user, issuer: issuer))
 end
 
+def delete_account(database)
+  print("account: ")
+  user, issuer = gets.chomp.split(':')
+  database.del_account(user, issuer: issuer)
+end
+
+def set_counter(database)
+  print("account: ")
+  user, issuer = gets.chomp.split(':')
+  begin
+    print("count: ")
+    count = gets.chomp
+  end while (begin Integer(count); true rescue false end)
+  database.set_counter(user, count, issuer: issuer)
+end
+
 def main(options)
   database = open_database(options[:directory])
   if database
@@ -103,6 +123,7 @@ def main(options)
       print("otpm> ")
       case gets&.strip
       when 'a', 'add'       then add_account(database)
+      when 'd', 'delete'    then delete_account(database)
       when 'g', 'generate'  then generate_code(database)
       when 'h', 'help'      then help
       when 'l', 'list'      then list_accounts(database)

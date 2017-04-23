@@ -63,6 +63,11 @@ module OTPM
         @database[accessor]['counter'] += 1
       end
 
+      def set_counter(user, counter, issuer: '')
+        accessor = account_key(user, issuer)
+        @database[accessor]['counter'] = Integer(counter)
+      end
+
       def del_account!(user, issuer: '')
         @database.delete(account_key(user, issuer))
       end

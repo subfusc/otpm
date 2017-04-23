@@ -24,6 +24,7 @@ module OTPM
 
     def delete_account(user, issuer: '')
       @db.del_account!(user, issuer: issuer)
+      @db.write!
     end
 
     def self.database_exist?(storage_directory: nil, storage_file: nil, config_file: nil)
@@ -54,6 +55,11 @@ module OTPM
       end
     end
 
+
+    def set_counter(user, counter, issuer: '')
+      @db.set_counter(user, counter, issuer: issuer)
+      @db.write!
+    end
 
     def list_accounts
       @db.list_accounts

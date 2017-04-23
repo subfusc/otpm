@@ -12,6 +12,12 @@ class OTPMTest < Minitest::Test
                '&period=30'
     @manager = OTPM::Manager.new('test-pass', storage_directory: '/tmp')
     @manager.store_account_from_google_uri(auth_uri)
+    @manager.store_account('test',
+                           'HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ',
+                           issuer: 'test',
+                           type: :hotp,
+                           digits: 8,
+                           counter: 0)
   end
 
   def teardown
@@ -21,7 +27,7 @@ class OTPMTest < Minitest::Test
   def test_storing_creates_correct_files
     assert(File.exist?('/tmp/storage.bin'))
     assert(File.exist?('/tmp/storage.yml'))
-    assert_equal(1, @manager.list_accounts.length)
+    assert_equal(2, @manager.list_accounts.length)
   end
 
   def test_initialization_vector_is_refreshed
@@ -62,7 +68,24 @@ class OTPMTest < Minitest::Test
                   "counter"  => 0})
   end
 
-  def test_generate_code
+  def test_generate_six_digit_totp_code
     assert(/\d{6}/, @manager.generate_code('john.doe@email.com', issuer: 'ACME Co'))
+  end
+
+  def test_generate_eight_digit_hotp_code
+    assert_equal(0, @manager.show_account('test', issuer: 'test')['counter'])
+    code = @manager.generate_code('test', issuer: 'test')
+    assert(/\d{8}/, code)
+    assert_equal(1, @manager.show_account('test', issuer: 'test')['counter'])
+    second_code = @manager.generate_code('test', issuer: 'test')
+    assert(/\d{8}/, second_code)
+    assert(code != second_code)
+    assert_equal(2, @manager.show_account('test', issuer: 'test')['counter'])
+  end
+
+  def test_set_counter_on_hotp_account
+    assert_equal(0, @manager.show_account('test', issuer: 'test')['counter'])
+    @manager.set_counter('test', 67, issuer: 'test')
+    assert_equal(67, @manager.show_account('test', issuer: 'test')['counter'])
   end
 end
