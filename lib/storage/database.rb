@@ -1,4 +1,5 @@
 require 'yaml'
+require 'fileutils'
 
 module OTPM
   module Storage
@@ -79,8 +80,10 @@ module OTPM
       end
 
       def write!
-        File.delete(@config_file)  if File.exist?(@config_file)
-        File.delete(@storage_file) if File.exist?(@storage_file)
+        File.delete(@config_file + '.bck')  if File.exist?(@config_file + '.bck')
+        File.delete(@storage_file + '.bck') if File.exist?(@storage_file + '.bck')
+        FileUtils.mv(@config_file, @config_file + '.bck')  if File.exist?(@config_file)
+        FileUtils.mv(@storage_file, @storage_file + '.bck') if File.exist?(@storage_file)
 
         blob = encrypt_database
 

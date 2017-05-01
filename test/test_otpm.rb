@@ -41,6 +41,10 @@ class OTPMTest < Minitest::Test
     assert(!old_initial_vector.nil?)
     assert(!config['initial_vector'].nil?)
     assert(old_initial_vector != config['initial_vector'])
+
+    # check that the backup has the old initial_vector
+    config = YAML.load(File.open('/tmp/storage.yml.bck', 'r').read())
+    assert(old_initial_vector == config['initial_vector'])
   end
 
   def test_all_keys_present_in_config
@@ -100,5 +104,10 @@ class OTPMTest < Minitest::Test
     assert_raises OTPM::Storage::AccountNotFoundException do
       @manager.generate_code("foo", issuer: "not_bar")
     end
+  end
+
+  def test_backup_file_exists
+    assert(File.exist?('/tmp/storage.bin.bck'))
+    assert(File.exist?('/tmp/storage.yml.bck'))
   end
 end
