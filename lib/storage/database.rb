@@ -1,5 +1,6 @@
 require 'yaml'
 require 'fileutils'
+require 'digest'
 
 module OTPM
   module Storage
@@ -87,8 +88,13 @@ module OTPM
 
         blob = encrypt_database
 
+        sha = Digest::SHA2.hexdigest(blob)
         File.open(@storage_file, 'w') {|s| s.write(blob)}
         File.open(@config_file, 'w')  {|s| s.write(@config.to_yaml)}
+
+        unless Digest::SHA2.hexdigest(File.open(@storage_file, 'r').read()) == sha
+          raise DatabaseInconsistencyException
+        end
       end
 
       private
