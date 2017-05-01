@@ -2,6 +2,7 @@ require_relative 'test_helper'
 require 'pty'
 require 'uuidtools'
 require 'fileutils'
+require 'timeout'
 
 class OTPMBinTest < Minitest::Test
 
@@ -21,38 +22,41 @@ class OTPMBinTest < Minitest::Test
                '&digits=6' +
                '&period=30'
 
+    readline_until_expected = lambda do |input, expected|
+      Timeout.timeout(3) do
+        buffer = input.readchar
+        while not expected.match(buffer)
+          buffer += input.readchar
+        end
+        buffer
+      end
+    end
+
     db_dir = UUIDTools::UUID.random_create.to_s
     begin
       PTY.spawn("otpm -d #{db_dir}") do |output, input, pid|
-        buffer = ""
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /Encryption [\[\]a-z\/]+:/)
         assert(buffer =~ /Encryption [\[\]a-z\/]+:/)
         input.puts("\n")
-        output.readpartial(1024, buffer)
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /password:/)
         assert(buffer =~ /password:/)
         input.puts("test-pass\n")
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /repeat password:/)
         assert(buffer =~ /repeat password:/)
         input.puts("test-pass\n")
-        output.readpartial(1024, buffer) # Empty puts for newline need to be read
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /otpm>\s+$/)
         assert(buffer =~ /otpm>\s+$/)
         input.puts("l\n")
-        output.readpartial(1024, buffer) # Empty puts for newline need to be read
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /^\s*otpm>\s+$/m)
         assert(buffer =~ /^\s*otpm>\s+$/m)
         input.puts("u\n")
-        output.readpartial(1024, buffer)
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /otpauth uri:/)
         assert(buffer =~ /otpauth uri:/)
         input.puts(auth_uri + "\n")
-        output.readpartial(1024, buffer)
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /^\s*otpm>\s+$/m)
         assert(buffer =~ /^\s*otpm>\s+$/m)
         input.puts("l\n")
-        output.readpartial(1024, buffer)
-        output.readpartial(1024, buffer)
+        buffer = readline_until_expected.(output, /^\s*otpm>\s+$/m)
         input.puts("q\n")
       end
     ensure
