@@ -35,10 +35,11 @@ class OTPMBinTest < Minitest::Test
         output.readpartial(1024, buffer)
         assert(buffer =~ /repeat password:/)
         input.puts("test-pass\n")
+        output.readpartial(1024, buffer) # Empty puts for newline need to be read
         output.readpartial(1024, buffer)
         assert(buffer =~ /otpm>\s+$/)
         input.puts("l\n")
-        output.readpartial(1024, buffer)
+        output.readpartial(1024, buffer) # Empty puts for newline need to be read
         output.readpartial(1024, buffer)
         assert(buffer =~ /^\s*otpm>\s+$/m)
         input.puts("u\n")
@@ -55,7 +56,8 @@ class OTPMBinTest < Minitest::Test
         input.puts("q\n")
       end
     ensure
-      %x{rm #{db_dir}/storage.* && rmdir #{db_dir}}
+      %x{rm #{db_dir}/storage.*}
+      %x{rmdir #{db_dir}}
     end
   end
 end

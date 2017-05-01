@@ -19,6 +19,7 @@ def help
   (l)ist:        List accounts
   (q)uit:        Quit
   (s)how:        Show account
+  set (c)ounter  Set the counter for a HOTP code
   EOS
 end
 
@@ -77,6 +78,7 @@ def new_database(directory = nil)
       second_password = STDIN.noecho(&:gets).chomp
       puts("\nPasswords did not match.") if password != second_password
     end while (password != second_password)
+    puts("")
     OTPM::Manager.new(password, database_type: encryption_type, storage_directory: directory)
   end
 end
@@ -111,7 +113,7 @@ def set_counter(database)
   begin
     print("count: ")
     count = gets.chomp
-  end while (begin Integer(count); true rescue false end)
+  end while (begin Integer(count); false rescue true end)
   database.set_counter(user, count, issuer: issuer)
 end
 
@@ -122,14 +124,15 @@ def main(options)
     loop do
       print("otpm> ")
       case gets&.strip
-      when 'a', 'add'       then add_account(database)
-      when 'd', 'delete'    then delete_account(database)
-      when 'g', 'generate'  then generate_code(database)
-      when 'h', 'help'      then help
-      when 'l', 'list'      then list_accounts(database)
-      when 'q', 'quit', nil then exit(0)
-      when 's', 'show'      then show_account(database)
-      when 'u', 'add_uri'   then add_account_by_google_uri(database)
+      when 'a', 'add'         then add_account(database)
+      when 'c', 'set counter' then set_counter(database)
+      when 'd', 'delete'      then delete_account(database)
+      when 'g', 'generate'    then generate_code(database)
+      when 'h', 'help'        then help
+      when 'l', 'list'        then list_accounts(database)
+      when 'q', 'quit', nil   then exit(0)
+      when 's', 'show'        then show_account(database)
+      when 'u', 'add uri'     then add_account_by_google_uri(database)
       else help
       end
     end
