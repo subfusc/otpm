@@ -5,6 +5,7 @@ module OTPM
     DEFAULT_DATABASE_LOCATION = File.join(Dir.home, ".cache", "otpm")
     DEFAULT_DATABASE_STORAGE  = "storage.bin"
     DEFAULT_DATABASE_CONFIG   = "storage.yml"
+    DATABASE_VERSION          = "0.1"
     SUPPORTED_ENCRYPTION_METHODS = [:cleartext, :blowfish, :aes]
 
     class Database
@@ -104,7 +105,7 @@ module OTPM
       end
 
       def new_config
-        {}
+        {'version' => DATABASE_VERSION}
       end
 
       def read_blob

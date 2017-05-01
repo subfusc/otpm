@@ -43,6 +43,13 @@ class OTPMTest < Minitest::Test
     assert(old_initial_vector != config['initial_vector'])
   end
 
+  def test_all_keys_present_in_config
+    assert(File.exist?('/tmp/storage.yml'))
+    config = YAML.load(File.open('/tmp/storage.yml', 'r').read())
+    assert_equal(config.keys.sort,
+                 %w{version cipher_string iterations initial_vector key_length salt}.sort)
+  end
+
   def test_database_is_not_unencryped
     assert(File.exist?('/tmp/storage.bin'))
     bin_database = File.open('/tmp/storage.bin', 'r').read()

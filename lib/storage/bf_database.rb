@@ -14,10 +14,11 @@ module OTPM
       end
 
       def new_config
-        {'cipher_string' => 'bf-cbc',
-         'iterations'    => rand(2000..10000),
-         'key_length'    => 16,
-         'salt'          => OpenSSL::Random.random_bytes(16)}
+        conf = super()
+        conf.merge({'cipher_string' => 'bf-cbc',
+                    'iterations'    => rand(2000..10000),
+                    'key_length'    => 16,
+                    'salt'          => OpenSSL::Random.random_bytes(16)})
       end
 
       def encrypt_database
