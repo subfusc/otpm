@@ -1,3 +1,4 @@
+require 'storage/exceptions'
 require 'storage/database'
 require 'storage/bf_database'
 require 'storage/aes_database'

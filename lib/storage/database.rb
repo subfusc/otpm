@@ -55,17 +55,17 @@ module OTPM
         if index_of_entire_key
           accessor = @database.keys[index_of_entire_key]
           @database[accessor]
+        else
+          raise AccountNotFoundException
         end
       end
 
       def increment_counter(user, issuer: '')
-        accessor = account_key(user, issuer)
-        @database[accessor]['counter'] += 1
+        get_account(user, issuer: issuer)['counter'] += 1
       end
 
       def set_counter(user, counter, issuer: '')
-        accessor = account_key(user, issuer)
-        @database[accessor]['counter'] = Integer(counter)
+        get_account(user, issuer: issuer)['counter'] = Integer(counter)
       end
 
       def del_account!(user, issuer: '')

@@ -88,4 +88,10 @@ class OTPMTest < Minitest::Test
     @manager.set_counter('test', 67, issuer: 'test')
     assert_equal(67, @manager.show_account('test', issuer: 'test')['counter'])
   end
+
+  def test_account_not_found_exception
+    assert_raises OTPM::Storage::AccountNotFoundException do
+      @manager.generate_code("foo", issuer: "not_bar")
+    end
+  end
 end
