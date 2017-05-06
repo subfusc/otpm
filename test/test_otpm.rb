@@ -99,6 +99,12 @@ class OTPMTest < Minitest::Test
     assert_equal(67, @manager.show_account('test', issuer: 'test')['counter'])
   end
 
+  def test_hotp_code_the_same_for_same_counter
+    assert_equal(0, @manager.show_account('test', issuer: 'test')['counter'])
+    code = @manager.generate_code('test', issuer: 'test')
+    assert_equal('61818800', code) # Generate once for the secret, should never change
+  end
+
   def test_account_not_found_exception
     assert_raises OTPM::Storage::AccountNotFoundException do
       @manager.generate_code("foo", issuer: "not_bar")
