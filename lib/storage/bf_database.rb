@@ -31,7 +31,7 @@ module OTPM
       end
 
       def decrypt_database
-        if (blob = read_blob)
+        if (blob = get_blob)
           decipher = OpenSSL::Cipher.new(@config['cipher_string'])
           decipher.decrypt
           decipher.key = @key

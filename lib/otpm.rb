@@ -29,10 +29,9 @@ module OTPM
     end
 
     def self.database_exist?(storage_directory: nil, storage_file: nil, config_file: nil)
-      storage, config = Storage::Database.file_paths(storage_directory: storage_directory,
-                                                     storage_file: storage_file,
-                                                     config_file: config_file)
-      File.exist?(storage) && File.exist?(config)
+      storage = Storage::Database.default_database_path(storage_directory: storage_directory,
+                                                        storage_file: storage_file)
+      File.exist?(storage)
     end
 
     def generate_code(user, issuer: '')

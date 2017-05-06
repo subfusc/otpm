@@ -5,8 +5,7 @@ require 'digest'
 module OTPM
   module Storage
     DEFAULT_DATABASE_LOCATION = File.join(Dir.home, ".cache", "otpm")
-    DEFAULT_DATABASE_STORAGE  = "storage.bin"
-    DEFAULT_DATABASE_CONFIG   = "storage.yml"
+    DEFAULT_DATABASE_STORAGE  = "storage.otpdb"
     DATABASE_VERSION          = "0.1"
     SUPPORTED_ENCRYPTION_METHODS = [:cleartext, :blowfish, :aes]
 
@@ -14,9 +13,8 @@ module OTPM
 
       def initialize(password, storage_directory: nil, storage_file: nil, config_file: nil)
         @storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
-        @storage_file, @config_file = Database.file_paths(storage_directory: storage_directory,
-                                                          storage_file: storage_file,
-                                                          config_file: config_file)
+        @storage_file = Database.default_database_path(storage_directory: storage_directory,
+                                                       storage_file: storage_file)
 
         FileUtils.mkdir_p(@storage_directory) unless Dir.exist?(@storage_directory)
         @config = read_config || new_config
@@ -30,10 +28,9 @@ module OTPM
                     end
       end
 
-      def Database.file_paths(storage_directory: nil, storage_file: nil, config_file: nil)
+      def Database.default_database_path(storage_directory: nil, storage_file: nil, config_file: nil)
         storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
-        [File.join(storage_directory, (storage_file || DEFAULT_DATABASE_STORAGE)),
-         File.join(storage_directory, (config_file  || DEFAULT_DATABASE_CONFIG))]
+        File.join(storage_directory, (storage_file || DEFAULT_DATABASE_STORAGE))
       end
 
       def add_account!(user, secret, issuer: '',
@@ -81,16 +78,13 @@ module OTPM
       end
 
       def write!
-        File.delete(@config_file + '.bck')  if File.exist?(@config_file + '.bck')
         File.delete(@storage_file + '.bck') if File.exist?(@storage_file + '.bck')
-        FileUtils.mv(@config_file, @config_file + '.bck')  if File.exist?(@config_file)
         FileUtils.mv(@storage_file, @storage_file + '.bck') if File.exist?(@storage_file)
 
         blob = encrypt_database
-
-        sha = Digest::SHA2.hexdigest(blob)
-        File.open(@storage_file, 'w') {|s| s.write(blob)}
-        File.open(@config_file, 'w')  {|s| s.write(@config.to_yaml)}
+        @config['database'] = blob
+        sha = Digest::SHA2.hexdigest(@config.to_yaml)
+        File.open(@storage_file, 'w')  {|s| s.write(@config.to_yaml)}
 
         unless Digest::SHA2.hexdigest(File.open(@storage_file, 'r').read()) == sha
           raise DatabaseInconsistencyException
@@ -104,7 +98,7 @@ module OTPM
       end
 
       def decrypt_database
-        read_blob
+        get_blob
       end
 
       def encrypt_database
@@ -118,13 +112,13 @@ module OTPM
         {'version' => DATABASE_VERSION}
       end
 
-      def read_blob
-        File.open(@storage_file, 'r').read if File.exist?(@storage_file)
+      def get_blob
+        @config['database']
       end
 
       def read_config
-        if File.exist?(@config_file)
-          config = File.open(@config_file, 'r').read
+        if File.exist?(@storage_file)
+          config = File.open(@storage_file, 'r').read
           YAML.load(config)
         end
       end

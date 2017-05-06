@@ -19,8 +19,8 @@ class ClearTextTest < Minitest::Test
   end
 
   def test_database_is_not_encryped
-    assert(File.exist?('/tmp/storage.bin'))
-    bin_database = File.open('/tmp/storage.bin', 'r').read()
+    assert(File.exist?('/tmp/storage.otpdb'))
+    bin_database = File.open('/tmp/storage.otpdb', 'r').read()
     assert(bin_database.index('XDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ'))
     assert(bin_database.index('john.doe@email.com'))
   end
