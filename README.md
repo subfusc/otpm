@@ -1,5 +1,4 @@
-# otpm
-A ruby library for storing OTP secrets
+A simple Ruby cli and library for storing and generating secrets.
 
 [![Build Status](https://travis-ci.org/subfuscous/otpm.svg?branch=master)](https://travis-ci.org/subfuscous/otpm)
 
