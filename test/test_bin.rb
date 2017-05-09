@@ -65,6 +65,13 @@ class OTPMBinTest < Minitest::Test
         assert(buffer =~ /\d{6}/)
         assert(buffer !~ /\d{8}/)
         assert(buffer =~ /^\s*otpm>\s+$/m)
+        input.puts("d\n")
+        buffer = readline_until_expected.(output, /^\s*account:\s+$/)
+        input.puts("john.doe@email.com:ACME Co\n")
+        buffer = readline_until_expected.(output, /^\s*otpm>\s+$/m)
+        input.puts("l\n")
+        buffer = readline_until_expected.(output, /^\s*otpm>\s+$/m)
+        assert(buffer !~ /john.doe@email.com:ACME Co/)
         input.puts("q\n")
       end
     ensure

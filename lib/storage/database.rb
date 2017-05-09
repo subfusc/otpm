@@ -70,7 +70,7 @@ module OTPM
 
       def del_account!(user, issuer: '')
         user = get_account(user, issuer: issuer) # Do a serch in case of partial account from
-        @database.delete(account_key(user['user'], issuer: ['issuer']))
+        @database.delete(account_key(user['user'], user['issuer']))
       end
 
       def list_accounts

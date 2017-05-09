@@ -111,6 +111,15 @@ class OTPMTest < Minitest::Test
     end
   end
 
+  def test_delete_account
+    old_count = @manager.list_accounts.length
+    assert_raises OTPM::Storage::AccountNotFoundException do
+      @manager.generate_code("foo", issuer: "not_bar")
+    end
+    @manager.delete_account('john.doe@email.com', issuer: 'ACME Co')
+    assert_equal(old_count - 1, @manager.list_accounts.length)
+  end
+
   def test_backup_file_exists
     assert(File.exist?('/tmp/storage.otpdb.bck'))
   end

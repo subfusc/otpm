@@ -110,7 +110,7 @@ class Cli
   def delete_account
     print("account: ")
     user, issuer = gets.chomp.split(':')
-    @database.del_account(user, issuer: issuer)
+    @database.delete_account(user, issuer: issuer)
   end
 
   def set_counter
