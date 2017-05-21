@@ -35,7 +35,14 @@ class Cli
   end
 
   def list_accounts
-    puts(@database.list_accounts.map{|user,account| format("%s:%s", user, account)})
+    @database.list_accounts.each do |user|
+      puts(format("%s:%s (digits: %s, type: [%s %s])",
+                  user['user'],
+                  user['issuer'],
+                  user['digits'],
+                  user['type'],
+                  user['type'] == 'totp' ? "#{user['interval']}s" : user['count']))
+    end
   end
 
   def add_account_by_google_uri

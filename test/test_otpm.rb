@@ -78,6 +78,22 @@ class OTPMTest < Minitest::Test
                   "counter"  => 0})
   end
 
+  def test_list_accounts
+    assert_equal(@manager.list_accounts,
+                 [{"user"=>"john.doe@email.com",
+                   "issuer"=>"ACME Co",
+                   "type"=>"totp",
+                   "digits"=>6,
+                   "counter"=>0,
+                   "interval"=>30},
+                  {"user"=>"test",
+                   "issuer"=>"test",
+                   "type"=>"hotp",
+                   "digits"=>8,
+                   "counter"=>0,
+                   "interval"=>30}])
+  end
+
   def test_generate_six_digit_totp_code
     assert(/\d{6}/, @manager.generate_code('john.doe@email.com', issuer: 'ACME Co'))
   end

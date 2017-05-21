@@ -74,7 +74,9 @@ module OTPM
       end
 
       def list_accounts
-        @database.map{|_,v| [v['user'], v['issuer']]}
+        @database.map do |_,v|
+          v.select{|k,_| ['user', 'issuer', 'type', 'counter', 'interval', 'digits'].include?(k)}
+        end
       end
 
       def write!
