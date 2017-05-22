@@ -1,6 +1,6 @@
 A simple Ruby cli and library for storing and generating secrets.
 
-[![Build Status](https://travis-ci.org/subfuscous/otpm.svg?branch=master)](https://travis-ci.org/subfuscous/otpm)
+[![Build Status](https://travis-ci.org/subfuscous/otpm.svg?branch=master)](https://travis-ci.org/subfuscous/otpm) [![Dependency Status](https://gemnasium.com/badges/github.com/subfuscous/otpm.svg)](https://gemnasium.com/github.com/subfuscous/otpm)
 
 This is a simple library with a cli program to store otpm secrets in an encrypted
 database for storage on a computer.
