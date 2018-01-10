@@ -2,7 +2,7 @@ require 'openssl'
 
 module OTPM
   module Storage
-    class BfDatabase < Database
+    class AESDatabase < Database
 
       private
 
@@ -15,10 +15,10 @@ module OTPM
 
       def new_config
         conf = super()
-        conf.merge({'cipher_string' => 'bf-cbc',
+        conf.merge({'cipher_string' => 'AES-256-CBC',
                     'iterations'    => rand(2000..10000),
-                    'key_length'    => 16,
-                    'salt'          => OpenSSL::Random.random_bytes(16)})
+                    'key_length'    => 32,
+                    'salt'          => OpenSSL::Random.random_bytes(32)})
       end
 
       def encrypt_database

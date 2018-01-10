@@ -1,13 +1,20 @@
 require 'yaml'
+require 'fileutils'
+require 'digest'
 
 module OTPM
   module Storage
+    DEFAULT_DATABASE_LOCATION = File.join(Dir.home, ".cache", "otpm")
+    DEFAULT_DATABASE_STORAGE  = "storage.otpdb"
+    DATABASE_VERSION          = "0.1"
+    SUPPORTED_ENCRYPTION_METHODS = [:cleartext, :blowfish, :aes]
+
     class Database
 
       def initialize(password, storage_directory: nil, storage_file: nil, config_file: nil)
-        @storage_directory = storage_directory || File.join(Dir.home, ".cache", "otpm")
-        @storage_file      = storage_file      || File.join(@storage_directory, "storage.bin")
-        @config_file       = config_file       || File.join(@storage_directory, "storage.yml")
+        @storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
+        @storage_file = Database.default_database_path(storage_directory: storage_directory,
+                                                       storage_file: storage_file)
 
         FileUtils.mkdir_p(@storage_directory) unless Dir.exist?(@storage_directory)
         @config = read_config || new_config
@@ -19,6 +26,11 @@ module OTPM
                     else
                       {}
                     end
+      end
+
+      def Database.default_database_path(storage_directory: nil, storage_file: nil, config_file: nil)
+        storage_directory = storage_directory || DEFAULT_DATABASE_LOCATION
+        File.join(storage_directory, (storage_file || DEFAULT_DATABASE_STORAGE))
       end
 
       def add_account!(user, secret, issuer: '',
@@ -39,35 +51,56 @@ module OTPM
 
       def get_account(user, issuer: '')
         accessor = account_key(user, issuer)
-        @database[accessor]
+        index_of_entire_key = @database.keys.index{|key| key.start_with?(accessor)}
+        if index_of_entire_key
+          accessor = @database.keys[index_of_entire_key]
+          @database[accessor]
+        else
+          raise AccountNotFoundException
+        end
+      end
+
+      def increment_counter(user, issuer: '')
+        get_account(user, issuer: issuer)['counter'] += 1
+      end
+
+      def set_counter(user, counter, issuer: '')
+        get_account(user, issuer: issuer)['counter'] = Integer(counter)
       end
 
       def del_account!(user, issuer: '')
-        @database.delete(account_key(user, issuer))
+        user = get_account(user, issuer: issuer) # Do a serch in case of partial account from
+        @database.delete(account_key(user['user'], user['issuer']))
       end
 
       def list_accounts
-        @database.map{|_,v| [v['user'], v['issuer']]}
+        @database.map do |_,v|
+          v.select{|k,_| ['user', 'issuer', 'type', 'counter', 'interval', 'digits'].include?(k)}
+        end
       end
 
       def write!
-        File.delete(@config_file)  if File.exist?(@config_file)
-        File.delete(@storage_file) if File.exist?(@storage_file)
+        File.delete(@storage_file + '.bck') if File.exist?(@storage_file + '.bck')
+        FileUtils.mv(@storage_file, @storage_file + '.bck') if File.exist?(@storage_file)
 
         blob = encrypt_database
+        @config['database'] = blob
+        sha = Digest::SHA2.hexdigest(@config.to_yaml)
+        File.open(@storage_file, 'w')  {|s| s.write(@config.to_yaml)}
 
-        File.open(@storage_file, 'w') {|s| s.write(blob)}
-        File.open(@config_file, 'w')  {|s| s.write(@config.to_yaml)}
+        unless Digest::SHA2.hexdigest(File.open(@storage_file, 'r').read()) == sha
+          raise DatabaseInconsistencyException
+        end
       end
 
       private
 
       def account_key(user, issuer)
-        format('%s:%s', user, issuer)
+        issuer && !issuer.empty? ? format('%s:%s', user, issuer) : user
       end
 
       def decrypt_database
-        read_blob
+        get_blob
       end
 
       def encrypt_database
@@ -78,16 +111,16 @@ module OTPM
       end
 
       def new_config
-        {}
+        {'version' => DATABASE_VERSION}
       end
 
-      def read_blob
-        File.open(@storage_file, 'r').read if File.exist?(@storage_file)
+      def get_blob
+        @config['database']
       end
 
       def read_config
-        if File.exist?(@config_file)
-          config = File.open(@config_file, 'r').read
+        if File.exist?(@storage_file)
+          config = File.open(@storage_file, 'r').read
           YAML.load(config)
         end
       end

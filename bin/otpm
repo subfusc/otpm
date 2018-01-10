@@ -1,56 +1,182 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 require 'otpm'
+require 'pp'
+require 'yaml'
 require 'io/console'
+require 'optparse'
 
-def help
-  puts(<<~EOS)
-  l: List accounts
-  a: Add Accunt
-  g: Generate Code
-  q: Quit
-  EOS
-end
+class Cli
+  TOTP_REQUIRED = {issuer: '', digest: 'sha1', interval: 30}
+  HOTP_REQUIRED = {issuer: '', digest: 'sha1', counter: 0}
 
-def list_accounts(database)
-  puts(database.list_accounts.map{|user,account| format("%s:%s", user, account)})
-end
+  def initialize(options)
+    @options = options
+    @database = open_database(@options[:directory])
+  end
 
-def add_account(database)
-  print("otpauth uri: ")
-  uri = gets
-  database.store_account_from_google_uri(uri.chomp)
-end
+  def help
+    puts(<<~EOS)
+        (a)dd:         Add account
+        add (u)ri:     Add account by Google URI
+        (d)elete:      Delete Account
+        (g)enerate:    Generate Code
+        (h)elp:        Show this
+        (l)ist:        List accounts
+        (q)uit:        Quit
+        (s)how:        Show account
+        set (c)ounter  Set the counter for a HOTP code
+    EOS
+  end
 
-def generate_code(database)
-  print("account: ")
-  user, issuer = gets.chomp.split(':')
-  puts(format("code: %s", database.generate_code(user, issuer: issuer)))
-end
+  def input_or_default(default)
+    answ = gets.chomp
+    answ.empty? ? default : answ
+  end
 
-def open_database
-  print("password: ")
-  password = STDIN.noecho(&:gets)
-  puts('')
-  OTPM::Manager.new(password)
-end
+  def list_accounts
+    @database.list_accounts.each do |user|
+      puts(format("%s:%s (digits: %s, type: [%s %s])",
+                  user['user'],
+                  user['issuer'],
+                  user['digits'],
+                  user['type'],
+                  user['type'] == 'totp' ? "#{user['interval']}s" : user['count']))
+    end
+  end
 
-def main
-  database = open_database
-  help
-  loop do
-    print("otpm> ")
-    case gets.strip
-    when 'a' then add_account(database)
-    when 'l' then list_accounts(database)
-    when 'g' then generate_code(database)
-    when 'q' then exit(0)
+  def add_account_by_google_uri
+    print("otpauth uri: ")
+    uri = gets
+    @database.store_account_from_google_uri(uri.chomp)
+  end
+
+  def add_account
+    options = {}
+    print("type [totp|htop] (default totp): ")
+    options[:type] = input_or_default('totp').to_sym
+    print("user: ")
+    user = gets.chomp
+    print("secret: ")
+    secret = gets.chomp
+    (options[:type] == :totp ? TOTP_REQUIRED : HOTP_REQUIRED).each do |k,v|
+      print(format("%s (Default %s): ", k, v))
+      options[k] = input_or_default(v)
+    end
+    @database.store_account(user, secret, **options)
+  end
+
+  def generate_code
+    print("account: ")
+    user, issuer = gets.chomp.split(':')
+    puts(format("code: %s", @database.generate_code(user, issuer: issuer)))
+  end
+
+  def new_database(directory = nil)
+    encryption_type = 'aes'
+    begin
+      print("Encryption [aes]/blowfish/cleartext: ")
+      selection = gets.chomp
+      encryption_type = selection unless selection.empty?
+      encryption_type = encryption_type&.to_sym
+    end while (encryption_type &&
+               !OTPM::Storage::SUPPORTED_ENCRYPTION_METHODS.include?(encryption_type))
+
+    unless encryption_type == :cleartext
+      password, second_password = 'tmp', 'second_tmp'
+      begin
+        print('password: ')
+        password = STDIN.noecho(&:gets).chomp
+        print("\nrepeat password: ")
+        second_password = STDIN.noecho(&:gets).chomp
+        puts("\nPasswords did not match.") if password != second_password
+      end while (password != second_password)
+      puts("")
+      OTPM::Manager.new(password, database_type: encryption_type, storage_directory: directory)
+    end
+  end
+
+  def open_database(directory = nil)
+    if OTPM::Manager.database_exist?(storage_directory: directory)
+
+      print("password: ")
+      password = STDIN.noecho(&:gets).chomp
+      puts('')
+      OTPM::Manager.new(password, storage_directory: directory)
+    else
+      new_database(directory)
+    end
+  end
+
+  def show_account
+    print("account: ")
+    user, issuer = gets.chomp.split(':')
+    pp(@database.show_account(user, issuer: issuer))
+  end
+
+  def delete_account
+    print("account: ")
+    user, issuer = gets.chomp.split(':')
+    @database.delete_account(user, issuer: issuer)
+  end
+
+  def set_counter
+    print("account: ")
+    user, issuer = gets.chomp.split(':')
+    begin
+      print("count: ")
+      count = gets.chomp
+    end while (begin Integer(count); false rescue true end)
+    @database.set_counter(user, count, issuer: issuer)
+  end
+
+  def menu
+    if @database
+      help
+      loop do
+        print("otpm> ")
+        case gets&.strip
+        when 'a', 'add'         then add_account
+        when 'c', 'set counter' then set_counter
+        when 'd', 'delete'      then delete_account
+        when 'g', 'generate'    then generate_code
+        when 'h', 'help'        then help
+        when 'l', 'list'        then list_accounts
+        when 'q', 'quit', nil   then exit(0)
+        when 's', 'show'        then show_account
+        when 'u', 'add uri'     then add_account_by_google_uri
+        else help
+        end
+      end
     end
   end
 end
 
+
+# Parse command line options the standard Unix way
+options = {}
+parser = OptParse.new do |opts|
+  opts.banner = 'Usage: otpm [example]'
+
+  opts.on('-d', '--directory DIRECTORY', 'Where to store the database and related files') do |dir|
+    options[:directory] = dir
+  end
+
+  opts.on('-v', '--version', 'Show version') do
+    puts(OTPM::VERSION)
+    exit
+  end
+
+  opts.on('-h', '--help', 'Show this text') do
+    puts(opts)
+    exit
+  end
+end.parse!
+
+
 begin
-  main
+  cli = Cli.new(options)
+  cli.menu
 rescue SystemExit, Interrupt
   exit(0)
 end

@@ -1,18 +1,19 @@
 PATH
   remote: .
   specs:
-    otpm (0.0.1)
+    otpm (0.9.0)
       openssl (~> 2)
       rotp (~> 3)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    fakefs (0.10.2)
-    minitest (5.10.1)
-    openssl (2.0.2)
+    fakefs (0.11.1)
+    minitest (5.10.3)
+    openssl (2.0.5)
     rake (12.0.0)
     rotp (3.3.0)
+    uuidtools (2.1.5)
 
 PLATFORMS
   ruby
@@ -23,6 +24,7 @@ DEPENDENCIES
   minitest (~> 5)
   otpm!
   rake (~> 12)
+  uuidtools (~> 2.1)
 
 BUNDLED WITH
-   1.14.4
+   1.15.4
